@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"log"
+	"sync"
 	"time"
 )
 
@@ -29,26 +30,31 @@ func (st *StressTest) Run() (*Report, error) {
 		}
 	}
 
-	executionsPerFork := st.Requests / st.Concurrency
-	remainingRequests := st.Requests % st.Concurrency
+	requestsPerWorker := st.Requests / st.Concurrency
+	extraRequests := st.Requests % st.Concurrency
 
 	start := time.Now()
-	reports := make(chan Report)
+	reports := make(chan Report, st.Concurrency)
+	var wg sync.WaitGroup
+
 	for i := 0; i < st.Concurrency; i++ {
-		count := executionsPerFork
-		if remainingRequests > 0 {
-			remainingRequests--
+		count := requestsPerWorker
+		if i < extraRequests {
 			count++
 		}
 
-		log.Printf("Requests per batch: %d, Concurrency: %d", count, st.Concurrency)
-
+		wg.Add(1)
 		go func(count int) {
-			r := Report{
-				FailedRequests: make(map[int]int),
-			}
+			defer wg.Done()
+
+			r := Report{FailedRequests: make(map[int]int)}
 			for i := 0; i < count; i++ {
-				code := DefaultRequester.MakeRequest(st.Url, st.Method, st.Headers, data, st.Timeout)
+				code, err := DefaultRequester.MakeRequest(st.Url, st.Method, st.Headers, data, st.Timeout)
+				if err != nil {
+					log.Printf("Request error: %v", err)
+					r.FailedRequests[0]++
+					continue
+				}
 				if code >= 200 && code < 300 {
 					r.SuccessfulRequests++
 				} else {
@@ -59,12 +65,12 @@ func (st *StressTest) Run() (*Report, error) {
 		}(count)
 	}
 
-	// merge all results
-	report := Report{
-		FailedRequests: make(map[int]int),
-	}
-	for i := 0; i < st.Concurrency; i++ {
-		r := <-reports
+	wg.Wait()
+	close(reports)
+
+	// Merge all results
+	report := Report{FailedRequests: make(map[int]int)}
+	for r := range reports {
 		report.SuccessfulRequests += r.SuccessfulRequests
 		report.TotalRequests += r.SuccessfulRequests
 		for k, v := range r.FailedRequests {

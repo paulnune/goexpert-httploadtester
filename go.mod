@@ -1,4 +1,4 @@
-module https://github.com/paulnune/goexpert-httploadtester
+module github.com/paulnune/goexpert-httploadtester
 
 go 1.22.7
 

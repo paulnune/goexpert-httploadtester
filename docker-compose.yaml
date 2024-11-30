@@ -1,0 +1,24 @@
+services:
+  httploadtester:
+    build:
+      context: .
+      dockerfile: build/Dockerfile
+    image: httploadtester:latest 
+    container_name: httploadtester
+    entrypoint: ["/stress-test"]
+    command:
+      [
+        "--url=${TARGET_URL}",
+        "--requests=${REQUESTS}",
+        "--concurrency=${CONCURRENCY}"
+      ]
+    env_file:
+      - .env
+    networks:
+      - httploadtester-network
+    stdin_open: true
+    tty: true
+
+networks:
+  httploadtester-network:
+    driver: bridge

@@ -2,9 +2,10 @@ package cmd
 
 import (
 	"fmt"
-	"https://github.com/paulnune/goexpert-httploadtester/internal/stresstest"
 	"os"
 	"time"
+
+	"github.com/paulnune/goexpert-httploadtester/internal/stresstest"
 
 	"github.com/spf13/cobra"
 )
@@ -13,8 +14,17 @@ var st = &stresstest.StressTest{}
 var rootCmd = &cobra.Command{
 	Use:   "stress-test",
 	Short: "Stress test tool",
-	Long:  `Stress test for make HTTP requests.`,
+	Long:  `Stress test for making HTTP requests.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if st.Url == "" {
+			return fmt.Errorf("URL cannot be empty")
+		}
+		if st.Requests <= 0 || st.Concurrency <= 0 {
+			return fmt.Errorf("Requests and concurrency must be positive numbers")
+		}
+		if st.Requests < st.Concurrency {
+			return fmt.Errorf("Requests cannot be less than concurrency")
+		}
 		if st.Headers != nil && !stresstest.ValidateHeaders(st.Headers) {
 			return fmt.Errorf("invalid headers format")
 		}
