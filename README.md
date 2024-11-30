@@ -192,16 +192,21 @@ Resultados:
 │   └── Dockerfile
 ├── cmd
 │   └── root.go
+├── docker-compose.yaml
 ├── go.mod
+├── go.sum
 ├── internal
 │   └── stresstest
 │       ├── reports.go
 │       ├── request.go
+│       ├── request_test.go
 │       ├── stress.go
+│       ├── stress_test.go
 │       ├── utils.go
+│       └── utils_test.go
 ├── main.go
-├── Makefile
 ├── README.md
+├── stress-test
 └── .env
 ```
 
