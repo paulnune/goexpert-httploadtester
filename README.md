@@ -24,13 +24,18 @@ O objetivo deste projeto é criar um sistema CLI em Go para realizar testes de c
   - Distribuição de outros códigos HTTP (404, 500, etc.).
 - Flexível para execução via Docker, Podman, Docker Compose ou Podman Compose.
 
-## Requisitos 📦
+## Relatórios 📊
 
-- Golang >= 1.23.1
-- Docker ou Podman
-- Docker Compose ou Podman Compose
+Após cada teste, o sistema gera um relatório com os seguintes dados:
 
-## Como Executar 🚀
+- **Tempo total gasto na execução**: Quanto tempo levou para concluir todas as requisições.
+- **Quantidade total de requisições realizadas**: Número total de requisições enviadas.
+- **Quantidade de requisições com status HTTP 200**: Requisições bem-sucedidas.
+- **Distribuição de outros códigos de status HTTP**: Contagem de códigos como 404, 500, etc.
+
+---
+
+### Como Executar 🚀
 
 ### Usando Docker Compose
 
@@ -49,36 +54,8 @@ O objetivo deste projeto é criar um sistema CLI em Go para realizar testes de c
 3. Para rodar o CLI com parâmetros personalizados, use:
 
    ```
-   docker compose run httploadtester --url=https://example.com --requests=100 --concurrency=10
+   docker compose run httploadtester --url=https://paulonunes.dev --requests=70 --concurrency=16
    ```
-
-### Usando Makefile
-
-Execute os comandos abaixo para maior automação:
-
-- **Compilação Local**
-
-  ```
-  make build
-  ```
-
-- **Testes**
-
-  ```
-  make test
-  ```
-
-- **Executar via CLI**
-
-  ```
-  make run -- --url=https://example.com --requests=100 --concurrency=10
-  ```
-
-- **Limpeza**
-
-  ```
-  make clean
-  ```
 
 ### Executando com `docker run`
 
@@ -86,38 +63,126 @@ A aplicação também pode ser executada diretamente com o comando `docker run`:
 
 ```
 docker image ls
-docker run <imagem_docker> --url=http://google.com --requests=1000 --concurrency=10
+docker run httploadtester --url=http://google.com --requests=200 --concurrency=4
 ```
 
-Certifique-se de substituir `<imagem_docker>` pelo nome ou ID da imagem Docker construída.
+Certifique-se de utilizar a imagem correta e que ela tenha sido buildada. 
 
-## Exemplos de Uso 🛠️
+---
 
-- **Executar Teste com Parâmetros Padrão**
+### Evidências de Execução
 
-  ```
-  docker compose run httploadtester --url=https://example.com --requests=100 --concurrency=10
-  ```
+#### **1. Teste Básico com 100 Requisições para um Site Existente**
+![Teste 1](.assets/1.png)
 
-- **Executar com Personalização**
+Este teste foi configurado para enviar 100 requisições com uma URL válida. O resultado mostra:
+- **Tempo total gasto**: 2 segundos aproximadamente.
+- **Quantidade total de requisições realizadas**: 100.
+- **Requisições bem-sucedidas**: 100 (100%).
+  
+**Conclusão**: O site respondeu de forma consistente e eficiente.
 
-  ```
-  docker compose run httploadtester --url=https://example.com --requests=500 --concurrency=20 --method=POST --timeout=10s
-  ```
+---
 
-## Relatórios 📊
+#### **2. Teste com Concorrência de 10 Requisições Simultâneas**
+![Teste 2](.assets/2.png)
 
-Após cada teste, será gerado um relatório no seguinte formato:
+Configuração:
+- **URL**: Site válido.
+- **Requisições**: 100.
+- **Concorrência**: 10.
 
-```
-+----------------+--------------+------------+--------+
-| TOTAL REQUESTS |   TIME SPENT | SUCCESSFUL | HTTP 0 |
-+----------------+--------------+------------+--------+
-|            500 |    5.002s    |        450 |     50 |
-+----------------+--------------+------------+--------+
-```
+Resultados:
+- **Tempo total**: 7,7 segundos.
+- **Requisições bem-sucedidas**: 100.
 
-O relatório é exibido diretamente no console após a execução dos testes.
+**Conclusão**: Mesmo com concorrência, o serviço respondeu de forma confiável.
+
+---
+
+#### **3. Teste com 70 Requisições em Alta Concorrência**
+![Teste 3](.assets/3.png)
+
+Configuração:
+- **URL**: Site válido.
+- **Requisições**: 70.
+- **Concorrência**: 16.
+
+Resultados:
+- **Tempo total**: 1,4 segundos.
+- **Requisições bem-sucedidas**: 70.
+
+**Conclusão**: Alta taxa de concorrência reduz o tempo total sem afetar a taxa de sucesso.
+
+---
+
+#### **4. Teste com 200 Requisições e Baixa Concorrência**
+![Teste 4](.assets/4.png)
+
+Configuração:
+- **URL**: Site válido.
+- **Requisições**: 200.
+- **Concorrência**: 4.
+
+Resultados:
+- **Tempo total**: 19 segundos.
+- **Requisições bem-sucedidas**: 200.
+
+**Conclusão**: Baixa concorrência aumenta o tempo de execução, mas todas as requisições foram bem-sucedidas.
+
+---
+
+#### **5. Teste com HTTP 405 (Método Não Permitido)**
+![Teste 5](.assets/5.png)
+
+Configuração:
+- **URL**: Site que retorna 405.
+- **Requisições**: 500.
+- **Concorrência**: 20.
+- **Método**: POST.
+
+Resultados:
+- **Tempo total**: 17,6 segundos.
+- **Requisições bem-sucedidas**: 0.
+- **HTTP 405**: 500.
+
+**Conclusão**: Teste demonstrou a incapacidade do serviço de lidar com requisições POST, retornando erro para todas.
+
+---
+
+#### **6. Teste com HTTP 404 (Não Encontrado)**
+![Teste 6](.assets/6.png)
+
+Configuração:
+- **URL**: `http://httpstat.us/404`.
+- **Requisições**: 80.
+- **Concorrência**: 6.
+
+Resultados:
+- **Tempo total**: 7,5 segundos.
+- **Requisições bem-sucedidas**: 0.
+- **HTTP 404**: 80.
+
+**Conclusão**: Todas as requisições retornaram o status 404, indicando que o endpoint não existe.
+
+---
+
+#### **7. Teste com HTTP 500 (Erro Interno do Servidor)**
+![Teste 7](.assets/7.png)
+
+Configuração:
+- **URL**: `http://httpstat.us/500`.
+- **Requisições**: 100.
+- **Concorrência**: 20.
+
+Resultados:
+- **Tempo total**: 2,9 segundos.
+- **Requisições bem-sucedidas**: 0.
+- **HTTP 500**: 100.
+
+**Conclusão**: Todas as requisições falharam devido a erros internos do servidor.
+
+---
 
 ## Estrutura do Projeto 📂
 
@@ -140,15 +205,7 @@ O relatório é exibido diretamente no console após a execução dos testes.
 └── .env
 ```
 
-## Validação
-
-Todos os requisitos do desafio foram atendidos:
-
-- Configuração via CLI ✅
-- Teste de carga com concorrência ✅
-- Geração de relatórios detalhados ✅
-- Execução via Docker/Podman ✅
-- Flexibilidade para personalização ✅
+---
 
 ## Autor
 
